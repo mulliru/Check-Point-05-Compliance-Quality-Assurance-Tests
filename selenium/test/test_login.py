@@ -1,28 +1,36 @@
-import time
+# test_login.py
 import os
+import time
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+# Função para salvar prints na pasta 'evidencias'
+def salvar_evidencia(driver, nome_arquivo):
+    caminho = os.path.join("..", "evidencias", nome_arquivo)
+    driver.save_screenshot(caminho)
+    print(f"📸 Screenshot salva em: {caminho}")
+
+# Teste de login positivo
 def test_login_sucesso():
-    print("🔵 Iniciando teste de login...")
+    print("\n🔵 Teste de login POSITIVO iniciado...")
 
-    chrome_options = Options()
-    chrome_options.add_experimental_option("detach", True)
-
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    options = Options()
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     wait = WebDriverWait(driver, 15)
 
-    driver.get("https://automationintesting.online/admin")
-    print("🌐 Página de login carregada.")
-
     try:
-        # Preencher login
+        # Acessa a página de login
+        driver.get("https://automationintesting.online/admin")
+        print("🌐 Página de login acessada.")
+        salvar_evidencia(driver, "login_tela.png")
+
+        # Preenche e envia o formulário
         username = wait.until(EC.presence_of_element_located((By.ID, "username")))
         password = driver.find_element(By.ID, "password")
         login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
@@ -31,23 +39,51 @@ def test_login_sucesso():
         password.send_keys("password")
         login_button.click()
 
-        # Esperar que vá pra próxima tela após login
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "roomName")))
-
-        # Tirar screenshot da tela de login com sucesso
-        screenshot_path = os.path.abspath("../evidencias/login_sucesso.png")
-        driver.save_screenshot(screenshot_path)
-        print(f"✅ Screenshot do login salva em: {screenshot_path}")
+        # Espera pelo elemento que indica login bem-sucedido
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="roomlisting"]')))
+        salvar_evidencia(driver, "login_sucesso.png")
+        print("✅ Login realizado com sucesso.")
 
     except Exception as e:
-        print(f"❌ Erro durante o teste: {e}")
-        evidencias_dir = os.path.abspath("../evidencias")
-        os.makedirs(evidencias_dir, exist_ok=True)
-        html_path = os.path.join(evidencias_dir, "page_source.html")
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        print("📝 HTML da página salvo em evidencias/page_source.html")
+        salvar_evidencia(driver, "login_erro.png")
+        print(f"❌ Erro no login positivo: {e}")
 
-    print("🔚 Teste finalizado.\n")
+    finally:
+        print("🔚 Teste de login positivo finalizado.\n")
 
-test_login_sucesso()
+# Teste de login negativo
+def test_login_negativo():
+    print("\n🔴 Teste de login NEGATIVO iniciado...")
+
+    options = Options()
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    try:
+        # Acessa a página de login
+        driver.get("https://automationintesting.online/admin")
+        username = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "username")))
+        password = driver.find_element(By.ID, "password")
+        login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+
+        # Dados inválidos
+        username.send_keys("usuario_errado")
+        password.send_keys("senha_errada")
+        login_button.click()
+
+        # Aguarda a falha e tira print
+        time.sleep(2)
+        salvar_evidencia(driver, "login_negativo.png")
+        print("🚫 Login inválido identificado com sucesso.")
+
+    except Exception as e:
+        print(f"❌ Erro no login negativo: {e}")
+
+    finally:
+        print("🔚 Teste de login negativo finalizado.\n")
+
+
+# EXECUÇÃO
+if __name__ == "__main__":
+    test_login_sucesso()
+    test_login_negativo()
