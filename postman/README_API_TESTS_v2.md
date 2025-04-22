@@ -89,13 +89,5 @@ pm.sendRequest("http://localhost:3001/room/1", function (err, res) {
 
 ---
 
-## 📷 Exemplo da coleção no Postman
 
-![Exemplo da coleção](./assets/postman-collection-preview.png)
 
----
-
-## 👨‍💻 Desenvolvido por
-
-Murillo Ferreira Ramos – RM553315  
-FIAP 2TDSPC – Checkpoint QA – Abril 2025
