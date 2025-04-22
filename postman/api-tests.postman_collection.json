@@ -1,0 +1,205 @@
+{
+    "info": {
+      "name": "Restful Booker Platform - API Tests",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "GET /room",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:3001/room",
+            "protocol": "http",
+            "host": [
+              "localhost"
+            ],
+            "port": "3001",
+            "path": [
+              "room"
+            ]
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Status code is 200\", function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "pm.test(\"Body contains rooms\", function () {",
+                "    var jsonData = pm.response.json();",
+                "    pm.expect(jsonData.rooms).to.be.an('array');",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "POST /room (valid)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3001/room",
+            "protocol": "http",
+            "host": [
+              "localhost"
+            ],
+            "port": "3001",
+            "path": [
+              "room"
+            ]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"roomName\": \"203\",\n  \"type\": \"double\",\n  \"accessible\": true,\n  \"image\": \"/images/room3.jpg\",\n  \"description\": \"Quarto novo para testes\",\n  \"features\": [\n    \"WiFi\",\n    \"TV\"\n  ],\n  \"roomPrice\": 250\n}"
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Room created successfully\", function () {",
+                "    pm.response.to.have.status(201);",
+                "    var jsonData = pm.response.json();",
+                "    pm.expect(jsonData).to.have.property(\"roomid\");",
+                "    pm.expect(jsonData.roomName).to.eql(\"203\");",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "POST /room (invalid)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3001/room",
+            "protocol": "http",
+            "host": [
+              "localhost"
+            ],
+            "port": "3001",
+            "path": [
+              "room"
+            ]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"type\": \"single\"\n}"
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Invalid data returns error\", function () {",
+                "    pm.response.to.have.status(400);",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "PUT /room/1",
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3001/room/1",
+            "protocol": "http",
+            "host": [
+              "localhost"
+            ],
+            "port": "3001",
+            "path": [
+              "room",
+              "1"
+            ]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"roomName\": \"101 Atualizado\",\n  \"type\": \"suite\",\n  \"accessible\": true,\n  \"image\": \"/images/room2.jpg\",\n  \"description\": \"Atualiza\\u00e7\\u00e3o de quarto\",\n  \"features\": [\n    \"WiFi\",\n    \"TV\",\n    \"Safe\"\n  ],\n  \"roomPrice\": 300\n}"
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Status code is 200\", function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "pm.test(\"Body should reflect updated data\", function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.roomName).to.eql(\"101 Atualizado\");",
+                "    pm.expect(jsonData.type).to.eql(\"suite\");",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DELETE /room/1",
+        "request": {
+          "method": "DELETE",
+          "url": {
+            "raw": "http://localhost:3001/room/1",
+            "protocol": "http",
+            "host": [
+              "localhost"
+            ],
+            "port": "3001",
+            "path": [
+              "room",
+              "1"
+            ]
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Room deleted\", function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "// Verifica se a room foi realmente deletada",
+                "pm.sendRequest(\"http://localhost:3001/room/1\", function (err, res) {",
+                "    pm.test(\"Room should not exist anymore\", function () {",
+                "        pm.expect(res.code).to.eql(404);",
+                "    });",
+                "});"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
