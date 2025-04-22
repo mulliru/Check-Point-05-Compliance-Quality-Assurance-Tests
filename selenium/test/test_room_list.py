@@ -1,53 +1,81 @@
-import time
+# test_room_list.py
 import os
+import time
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+# Função para salvar prints na pasta 'evidencias'
+def salvar_evidencia(driver, nome_arquivo):
+    caminho = os.path.join("..", "evidencias", nome_arquivo)
+    driver.save_screenshot(caminho)
+    print(f"📸 Screenshot salva em: {caminho}")
+
+# Função auxiliar de login
+def fazer_login(driver, wait):
+    driver.get("https://automationintesting.online/admin")
+
+    username = wait.until(EC.presence_of_element_located((By.ID, "username")))
+    password = driver.find_element(By.ID, "password")
+    login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+
+    username.send_keys("admin")
+    password.send_keys("password")
+    login_button.click()
+
+# Teste POSITIVO: verifica se há quartos listados
 def test_listagem_quartos():
-    print("🔵 Iniciando teste de listagem de quartos...")
+    print("\n🔵 Teste de listagem de quartos POSITIVO iniciado...")
 
-    chrome_options = Options()
-    chrome_options.add_experimental_option("detach", True)
-
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    options = Options()
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     wait = WebDriverWait(driver, 15)
 
-    driver.get("https://automationintesting.online/admin")
-    print("🌐 Página de login carregada.")
-
     try:
-        # Login
-        username = wait.until(EC.presence_of_element_located((By.ID, "username")))
-        password = driver.find_element(By.ID, "password")
-        login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+        fazer_login(driver, wait)
+        room_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="roomlisting"]')))
 
-        username.send_keys("admin")
-        password.send_keys("password")
-        login_button.click()
-
-        # Esperar os quartos carregarem
-        wait.until(EC.presence_of_element_located((By.XPATH, "//*[starts-with(@id, 'roomName')]")))
-
-        # Tirar screenshot da listagem de quartos
-        screenshot_path = os.path.abspath("../evidencias/listagem_quartos.png")
-        driver.save_screenshot(screenshot_path)
-        print(f"✅ Screenshot da listagem de quartos salva em: {screenshot_path}")
+        if room_element:
+            salvar_evidencia(driver, "listagem_quartos.png")
+            print("✅ Quarto visível identificado com sucesso.")
 
     except Exception as e:
-        print(f"❌ Erro durante o teste: {e}")
-        evidencias_dir = os.path.abspath("../evidencias")
-        os.makedirs(evidencias_dir, exist_ok=True)
-        html_path = os.path.join(evidencias_dir, "page_source.html")
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        print("📝 HTML da página salvo em evidencias/page_source.html")
+        salvar_evidencia(driver, "erro_listagem_quartos.png")
+        print(f"❌ Erro durante o teste positivo de listagem: {e}")
 
-    print("🔚 Teste finalizado.\n")
+    finally:
+        print("🔚 Teste de listagem positivo finalizado.\n")
 
-test_listagem_quartos()
+# Teste NEGATIVO: tenta acessar uma seção inválida
+def test_listagem_quartos_negativo():
+    print("\n🔴 Teste de listagem de quartos NEGATIVO iniciado...")
+
+    options = Options()
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    wait = WebDriverWait(driver, 10)
+
+    try:
+        fazer_login(driver, wait)
+
+        # Navega para uma rota inválida
+        driver.get("https://automationintesting.online/admin/invalidsection")
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="roomlisting"]')))
+
+    except Exception:
+        salvar_evidencia(driver, "listagem_quartos_negativo.png")
+        print("🚫 Página inválida acessada com falha intencional detectada.")
+
+    finally:
+        print("🔚 Teste de listagem negativo finalizado.\n")
+
+
+# EXECUÇÃO
+if __name__ == "__main__":
+    test_listagem_quartos()
+    test_listagem_quartos_negativo()
