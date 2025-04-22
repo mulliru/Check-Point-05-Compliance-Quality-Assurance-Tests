@@ -1,1 +1,4 @@
 selenium==4.20.0
+pytest 
+webdriver-manager
+
